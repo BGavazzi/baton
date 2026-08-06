@@ -1,0 +1,4 @@
+# Core has no third-party runtime dependencies on purpose: the X11 backend
+# shells out to xdotool/imagemagick and the Gemini provider uses urllib, so
+# `pip install -r` is only needed for tests and the optional local backend.
+pytest>=8.0
