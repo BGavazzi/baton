@@ -38,6 +38,10 @@ It also isn't browser-specific. The same loop drives a terminal, a native app, o
 
 **Replay, so regressions are catchable.** You cannot regression-test an agent by running it — a live run touches UI that changes underneath you, costs a full loop of vision calls, and fails for reasons unrelated to your change. Traces already hold the exact frames the model saw, so `replay.compare()` feeds them back and diffs what the model does *now* against what it did, and `replay.check()` re-validates recorded actions against the current action schema with no provider at all: free, instant, and it catches the regression most likely to pass silently — tightening the vocabulary so previously-legal behaviour is now illegal.
 
+**Per-step cost, not one number on an invoice.** An agent loop's spend is invisible until it's aggregated, by which point the useful questions are unanswerable — which task is expensive, whether a prompt change made things worse, whether the budget is anywhere near reality. `cost.Ledger` accounts per step, because that's where the decisions are: a run that burned its budget re-reading the same screen looks identical, in aggregate, to one that did forty productive things. `would_exceed()` estimates the *next* step too, since checking only what's been spent discovers the ceiling one step late. Prices are injected, never hardcoded — vendor pricing changes without warning, and a stale constant produces confidently wrong numbers, which is worse than none.
+
+**Traces you can actually show someone.** A trace is the right format for debugging and the wrong one for communicating — "here are 40 PNGs and a JSONL" doesn't demo. `filmstrip.gif()` plays the run back; `filmstrip.filmstrip()` lays every frame into one wide PNG that pastes into a PR or a README. Both build purely from frames already on disk, so nothing re-runs an agent. Pillow is imported lazily and its absence is a clear error, so the core keeps its zero runtime dependencies.
+
 ## Layout
 
 ```
@@ -49,6 +53,8 @@ src/baton/
     base.py            what a controllable screen has to do
     x11.py             xdotool + imagemagick; runs anywhere with a DISPLAY
   replay.py            eval harness: re-run recorded traces, no live screen
+  cost.py              per-step token/spend ledger with a look-ahead ceiling
+  filmstrip.py         trace -> GIF / contact sheet, for showing people
   providers/
     base.py            provider interface, system prompt, response salvaging
     gemini.py          Gemini vision
@@ -59,7 +65,7 @@ src/baton/
 
 ## Status
 
-Core loop, action boundary, X11 backend, Gemini provider, tracing, the replay harness, the task layer and the flagship job-application task are all in place — 61 tests, all with a scripted provider and fake screen, so no network and no X server. The X11 backend is additionally verified live against a real Xvfb display (geometry, PNG capture, coordinate mapping, real key events).
+Core loop, action boundary, X11 backend, Gemini provider, tracing, the replay harness, the task layer, the flagship job-application task, the cost ledger and trace rendering are all in place — 76 tests, all with a scripted provider and fake screen, so no network and no X server. The X11 backend is additionally verified live against a real Xvfb display (geometry, PNG capture, coordinate mapping, real key events).
 
 Next: wiring a live end-to-end run and recording the first real traces.
 
