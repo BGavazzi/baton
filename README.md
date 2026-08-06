@@ -22,6 +22,8 @@ It also isn't browser-specific. The same loop drives a terminal, a native app, o
 
 **One core, many tasks.** The agent loop knows nothing about jobs, browsers, or forms. Tasks are thin: a goal string, some context, and success criteria.
 
+**Nothing gets invented.** A task supplies an explicit set of facts, and the prompt states that anything absent is unknown — to be asked about, not inferred, and not substituted from a similar field. On a form submitted under someone's real name, a plausible fabrication is worse than an incomplete application: the applicant has to defend it in an interview without knowing it was said on their behalf.
+
 **A closed action vocabulary.** The model may click, type, press keys, scroll, wait, and terminate. That's it. There is no action that takes a shell string, so the blast radius is bounded by what is reachable through the UI. Everything crosses one validating boundary (`actions.parse_action`) that rejects rather than coerces — a clamped out-of-range coordinate still clicks somewhere real and arbitrary.
 
 **Normalised coordinates.** The model points in 0–1000 space on both axes, not pixels. Vision models are trained to point this way (Gemini emits `[0,1000]` natively), and it decouples decisions from resolution — a trace recorded at 1280×800 replays against 1920×1080 without rewriting anything.
@@ -50,14 +52,16 @@ src/baton/
   providers/
     base.py            provider interface, system prompt, response salvaging
     gemini.py          Gemini vision
-  tasks/               goal + context + success criteria, per task
+  tasks/
+    base.py            goal + permitted facts + step budget
+    job_apply.py       flagship task: fill and submit an application
 ```
 
 ## Status
 
-Core loop, action boundary, X11 backend, Gemini provider, tracing, the task layer and the replay harness are in place — 48 tests, all with a scripted provider and fake screen, so no network and no X server. The X11 backend is additionally verified live against a real Xvfb display (geometry, PNG capture, coordinate mapping, real key events).
+Core loop, action boundary, X11 backend, Gemini provider, tracing, the replay harness, the task layer and the flagship job-application task are all in place — 61 tests, all with a scripted provider and fake screen, so no network and no X server. The X11 backend is additionally verified live against a real Xvfb display (geometry, PNG capture, coordinate mapping, real key events).
 
-Next: the flagship job-application task on top of the task layer.
+Next: wiring a live end-to-end run and recording the first real traces.
 
 ## Running the tests
 
