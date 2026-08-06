@@ -34,6 +34,8 @@ It also isn't browser-specific. The same loop drives a terminal, a native app, o
 
 **Dry run.** Proposes and records everything, sends no input. The honest way to watch what an agent *would* do on a real screen.
 
+**Replay, so regressions are catchable.** You cannot regression-test an agent by running it — a live run touches UI that changes underneath you, costs a full loop of vision calls, and fails for reasons unrelated to your change. Traces already hold the exact frames the model saw, so `replay.compare()` feeds them back and diffs what the model does *now* against what it did, and `replay.check()` re-validates recorded actions against the current action schema with no provider at all: free, instant, and it catches the regression most likely to pass silently — tightening the vocabulary so previously-legal behaviour is now illegal.
+
 ## Layout
 
 ```
@@ -44,6 +46,7 @@ src/baton/
   backends/
     base.py            what a controllable screen has to do
     x11.py             xdotool + imagemagick; runs anywhere with a DISPLAY
+  replay.py            eval harness: re-run recorded traces, no live screen
   providers/
     base.py            provider interface, system prompt, response salvaging
     gemini.py          Gemini vision
@@ -52,9 +55,9 @@ src/baton/
 
 ## Status
 
-Core loop, action boundary, X11 backend, Gemini provider and tracing are in place, with 34 tests covering the boundary and the guards (scripted provider + fake screen, no network, no X server).
+Core loop, action boundary, X11 backend, Gemini provider, tracing, the task layer and the replay harness are in place — 48 tests, all with a scripted provider and fake screen, so no network and no X server. The X11 backend is additionally verified live against a real Xvfb display (geometry, PNG capture, coordinate mapping, real key events).
 
-Next: the task layer and the flagship job-application task, then a replay harness that re-runs recorded traces against a provider to catch regressions without touching a live screen.
+Next: the flagship job-application task on top of the task layer.
 
 ## Running the tests
 
